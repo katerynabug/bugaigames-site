@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bugai Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0e1f; --bg-2: #0d1226; --fg: #f1ede4; --fg-dim: #8d92a8;
+    --line: rgba(241,237,228,0.12);
+    --accent: #4ad6c0; --accent-2: #c8b8ff; --accent-3: #ff6a3d;
+    --game-1: #a4ecd0; --game-2: #4ad6c0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--fg); }
+  body { font-family: 'Inter Tight', system-ui, sans-serif; overflow-x: hidden; cursor: none; -webkit-font-smoothing: antialiased; line-height: 1.4; letter-spacing: -0.01em; }
+  a { color: inherit; text-decoration: none; cursor: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: none; }
+  ::selection { background: var(--accent); color: var(--bg); }
+  em, .serif { font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  .ph { display: flex; align-items: center; justify-content: center; text-align: center; width: 100%; height: 100%; background: linear-gradient(135deg, var(--game-1) 0%, var(--game-2) 100%); }
+  .ph span { font-family: 'Instrument Serif', serif; font-style: italic; font-size: clamp(28px, 5vw, 64px); color: rgba(10,30,28,0.55); letter-spacing: -0.02em; padding: 16px; }
+  img.media { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+  /* Background mesh */
+  .mesh-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(110px); opacity: 0.55; transition: transform 0.9s cubic-bezier(.22,.61,.36,1); will-change: transform; }
+  .blob-1 { width: 720px; height: 720px; background: var(--game-2); top: -200px; left: -200px; }
+  .blob-2 { width: 640px; height: 640px; background: var(--accent-3); top: 30%; right: -160px; opacity: 0.45; }
+  .blob-3 { width: 580px; height: 580px; background: var(--game-1); bottom: 10%; left: 30%; opacity: 0.4; }
+  .blob-4 { width: 500px; height: 500px; background: var(--accent-2); top: 80%; left: -100px; opacity: 0.4; }
+  .mesh-bg::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(241,237,228,0.025) 1px, transparent 1px); background-size: 6px 6px; }
+
+  /* Cursor */
+  .cursor { position: fixed; top: 0; left: 0; width: 28px; height: 28px; background: var(--accent-2); opacity: 0.85; border-radius: 50%; pointer-events: none; z-index: 9999; transition: width .35s cubic-bezier(.2,.8,.2,1), height .35s cubic-bezier(.2,.8,.2,1), background .25s, opacity .25s; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .cursor-label { font-family: 'Inter Tight', sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0; color: var(--bg); }
+  .cursor.expanded { width: 128px; height: 128px; background: var(--accent); opacity: 1; }
+  .cursor.expanded .cursor-label { opacity: 1; }
+  @media (pointer: coarse) { body { cursor: auto; } a, button { cursor: pointer; } .cursor { display: none; } }
+
+  .wrap { max-width: 1440px; margin: 0 auto; padding: 0 40px; position: relative; z-index: 5; }
+  @media (max-width: 700px) { .wrap { padding: 0 20px; } }
+
+  /* Nav */
+  .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; padding: 22px 40px; backdrop-filter: blur(18px); background: rgba(10,14,31,0.35); border-bottom: 1px solid var(--line); }
+  @media (max-width: 700px) { .nav { padding: 18px 20px; } }
+  .brand { display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 17px; letter-spacing: -0.02em; }
+  .brand-mark { width: 22px; height: 22px; background: var(--fg); border-radius: 4px; position: relative; }
+  .brand-mark::before { content: ""; position: absolute; inset: 4px 5px; background: var(--bg); border-radius: 1px; }
+  .brand-mark::after { content: ""; position: absolute; left: 50%; bottom: 4px; width: 4px; height: 4px; background: var(--accent); border-radius: 50%; transform: translateX(-50%); }
+  .nav-mid { display: none; gap: 36px; font-size: 14px; }
+  @media (min-width:900px){ .nav-mid { display: flex; } }
+  .nav-mid a { color: var(--fg-dim); transition: color .25s; }
+  .nav-mid a:hover, .nav-mid a.active { color: var(--fg); }
+  .nav-mid a.active { color: var(--accent); }
+  .menu-btn { display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; padding: 10px 16px; border: 1px solid var(--line); border-radius: 999px; }
+  .menu-btn .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* Hero */
+  .game-hero { padding: 220px 0 80px; }
+  .breadcrumb { display: inline-flex; align-items: center; gap: 10px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 48px; }
+  .breadcrumb a { color: var(--fg-dim); transition: color .2s; }
+  .breadcrumb a:hover { color: var(--fg); }
+  .breadcrumb .sep { opacity: 0.4; }
+  .hero-title { font-size: clamp(64px, 12vw, 200px); line-height: 0.88; letter-spacing: -0.04em; font-weight: 500; margin-bottom: 40px; }
+  .hero-title em { color: var(--accent); }
+  .hero-tagline { font-family: 'Instrument Serif', serif; font-style: italic; font-size: clamp(28px, 4vw, 56px); line-height: 1.15; color: var(--fg); max-width: 900px; margin-bottom: 80px; }
+  .meta-strip { display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; padding: 32px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  @media (min-width: 768px) { .meta-strip { grid-template-columns: repeat(4, 1fr); } }
+  .meta-item h5 { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; margin-bottom: 10px; }
+  .meta-item p { font-size: 17px; }
+  .meta-item p em { color: var(--accent); }
+  .hero-art { position: relative; height: 64vh; min-height: 460px; margin-top: 80px; border-radius: 24px; overflow: hidden; background: linear-gradient(135deg, var(--game-1) 0%, var(--game-2) 50%, #2a8c80 100%); display: flex; align-items: center; justify-content: center; }
+  .hero-art .ph { background: none; }
+  .hero-art::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(circle at 20% 80%, rgba(255,255,255,0.25) 0%, transparent 40%), radial-gradient(circle at 80% 20%, rgba(0,30,28,0.25) 0%, transparent 40%); pointer-events: none; z-index: 1; }
+  .hero-art .media { position: relative; z-index: 2; }
+  .hero-art-label { position: relative; z-index: 2; font-family: 'Instrument Serif', serif; font-style: italic; font-size: clamp(60px, 9vw, 140px); color: rgba(10,30,28,0.75); letter-spacing: -0.03em; }
+
+  /* Long-form */
+  .longform { padding: 160px 0; display: grid; grid-template-columns: 1fr; gap: 64px; }
+  @media (min-width: 1000px) { .longform { grid-template-columns: 1fr 1.4fr; gap: 120px; } }
+  .longform-head .section-num { display: inline-flex; align-items: center; gap: 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 32px; }
+  .longform-head .square { width: 8px; height: 8px; background: var(--accent); display: inline-block; }
+  .longform-head h2 { font-size: clamp(40px, 5vw, 76px); line-height: 0.95; letter-spacing: -0.03em; font-weight: 500; }
+  .longform-head h2 em { color: var(--accent); }
+  .longform-body p { font-size: 22px; line-height: 1.55; color: var(--fg); margin-bottom: 28px; max-width: 64ch; }
+  .longform-body p:first-child::first-letter { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 96px; float: left; line-height: 0.85; padding: 6px 14px 0 0; color: var(--accent); }
+  .pull-quote { font-family: 'Instrument Serif', serif; font-style: italic; font-size: clamp(32px, 3.5vw, 48px); line-height: 1.2; color: var(--fg); margin: 56px 0; padding-left: 24px; border-left: 2px solid var(--accent); }
+
+  /* Screenshots */
+  .shots { padding: 40px 0 120px; }
+  .shots-head { display: flex; justify-content: space-between; align-items: end; flex-wrap: wrap; gap: 24px; margin-bottom: 48px; }
+  .shots-head h3 { font-size: clamp(36px, 4.5vw, 64px); line-height: 0.95; letter-spacing: -0.03em; font-weight: 500; }
+  .shots-head h3 em { color: var(--accent); }
+  .shots-head .mono { color: var(--fg-dim); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .shots-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 700px) { .shots-grid { grid-template-columns: repeat(3, 1fr); } }
+  .shot { aspect-ratio: 9 / 16; border-radius: 16px; overflow: hidden; position: relative; transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+  .shot:hover { transform: translateY(-6px) scale(1.02); }
+  .shot-label { position: absolute; bottom: 14px; left: 16px; z-index: 3; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--fg); text-transform: uppercase; letter-spacing: 0.06em; text-shadow: 0 1px 8px rgba(0,0,0,0.5); }
+
+  /* Press */
+  .press { padding: 120px 0; border-top: 1px solid var(--line); }
+  .press-head { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 56px; display: flex; align-items: center; gap: 10px; }
+  .press-head .square { width: 8px; height: 8px; background: var(--accent); display: inline-block; }
+  .press-grid { display: grid; grid-template-columns: 1fr; gap: 56px; }
+  @media (min-width: 768px) { .press-grid { grid-template-columns: repeat(3, 1fr); gap: 64px; } }
+  .quote { font-family: 'Instrument Serif', serif; font-style: italic; font-size: clamp(24px, 2.4vw, 32px); line-height: 1.25; margin-bottom: 24px; }
+  .quote::before { content: "\201C"; color: var(--accent); margin-right: 4px; }
+  .quote::after { content: "\201D"; color: var(--accent); }
+  .quote-source { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.08em; }
+  .quote-source strong { color: var(--fg); font-weight: 500; }
+
+  /* Awards */
+  .awards { padding: 80px 0; border-top: 1px solid var(--line); }
+  .awards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; }
+  @media (min-width: 700px) { .awards-grid { grid-template-columns: repeat(4, 1fr); } }
+  .award { padding: 32px 24px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .award-year { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); letter-spacing: 0.08em; margin-bottom: 14px; }
+  .award-name { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 26px; line-height: 1.15; margin-bottom: 10px; }
+  .award-from { font-size: 13px; color: var(--fg-dim); }
+
+  /* Credits */
+  .credits { padding: 120px 0; display: grid; grid-template-columns: 1fr; gap: 48px; }
+  @media (min-width: 900px) { .credits { grid-template-columns: 1fr 2fr; gap: 80px; } }
+  .credits h3 { font-size: clamp(36px, 4vw, 56px); line-height: 0.95; letter-spacing: -0.03em; font-weight: 500; }
+  .credits h3 em { color: var(--accent); }
+  .credits-list { display: grid; grid-template-columns: 1fr; gap: 28px; }
+  @media (min-width: 700px) { .credits-list { grid-template-columns: 1fr 1fr; } }
+  .credit-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 14px 0; border-bottom: 1px dashed var(--line); }
+  .credit-role { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.08em; }
+  .credit-name { font-size: 17px; font-weight: 500; }
+
+  /* Download */
+  .download { padding: 120px 0 160px; text-align: center; border-top: 1px solid var(--line); }
+  .download h3 { font-size: clamp(48px, 7vw, 96px); line-height: 0.95; letter-spacing: -0.03em; font-weight: 500; margin-bottom: 56px; }
+  .download h3 em { color: var(--accent); }
+  .store-row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  .store-btn { display: inline-flex; align-items: center; gap: 14px; padding: 18px 32px; background: var(--fg); color: var(--bg); border-radius: 999px; font-weight: 600; font-size: 16px; transition: background .25s, transform .25s; }
+  .store-btn:hover { background: var(--accent); transform: translateY(-2px); }
+  .store-btn .icn { width: 22px; height: 22px; display: inline-flex; }
+  .store-btn .icn svg { width: 100%; height: 100%; }
+  .coming-note { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.12em; }
+
+  /* Next game */
+  .next-game { padding: 120px 0; border-top: 1px solid var(--line); }
+  .next-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 24px; }
+  .next-link { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; flex-wrap: wrap; transition: color .25s; }
+  .next-link:hover { color: var(--accent); }
+  .next-name { font-size: clamp(56px, 9vw, 140px); line-height: 0.9; letter-spacing: -0.04em; font-weight: 500; }
+  .next-name em { font-family: 'Instrument Serif', serif; font-style: italic; }
+  .next-arrow { font-size: 32px; transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+  .next-link:hover .next-arrow { transform: translate(8px, -8px); }
+
+  /* Footer */
+  footer { position: relative; z-index: 5; padding: 120px 0 48px; }
+  .footer-bottom { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; padding-top: 32px; margin-top: 64px; border-top: 1px solid var(--line); font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--fg-dim); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  .reveal { opacity: 0; transform: translateY(28px); transition: opacity .9s ease, transform .9s cubic-bezier(.22,.61,.36,1); }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="mesh-bg" aria-hidden="true">
+  <div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div><div class="blob blob-4"></div>
+</div>
+
+<div class="cursor" id="cursor"><span class="cursor-label" id="cursorLabel"></span></div>
+
+<nav class="nav">
+  <a href="index.html" class="brand" data-cursor-label="HOME"><span class="brand-mark"></span><span id="brandName">Bugai&nbsp;Games</span></a>
+  <div class="nav-mid">
+    <a href="index.html#work" class="active" data-cursor-label="VIEW">Games</a>
+    <a href="index.html#studio" data-cursor-label="VIEW">Studio</a>
+    <a href="index.html#contact" data-cursor-label="VIEW">Contact</a>
+  </div>
+  <button class="menu-btn" id="statusPill" data-cursor-label="VIEW"><span class="dot"></span><span id="statusText">Available</span></button>
+</nav>
+
+<section class="game-hero">
+  <div class="wrap">
+    <div class="breadcrumb reveal">
+      <a href="index.html#work">← Games</a><span class="sep">/</span>
+      <span id="crumbNum">01</span><span class="sep">/</span><span id="crumbName"></span>
+    </div>
+    <h1 class="hero-title reveal" id="heroTitle"></h1>
+    <p class="hero-tagline reveal" id="heroTagline" hidden></p>
+    <div class="meta-strip reveal" id="metaStrip" hidden></div>
+    <div class="hero-art reveal" id="heroArt"></div>
+  </div>
+</section>
+
+<section class="longform wrap" id="aboutSection" hidden>
+  <div class="longform-head reveal">
+    <div class="section-num"><span class="square"></span>01 / ABOUT THE GAME</div>
+    <h2 id="aboutH2"></h2>
+  </div>
+  <div class="longform-body reveal" id="aboutBody"></div>
+</section>
+
+<section class="shots wrap" id="shotsSection" hidden>
+  <div class="shots-head reveal">
+    <h3>From the <em>game</em></h3>
+    <span class="mono" id="shotsCount"></span>
+  </div>
+  <div class="shots-grid reveal" id="shotsGrid"></div>
+</section>
+
+<section class="press" id="pressSection" hidden>
+  <div class="wrap">
+    <div class="press-head reveal"><span class="square"></span> 02 / PRESS</div>
+    <div class="press-grid" id="pressGrid"></div>
+  </div>
+</section>
+
+<section class="awards" id="awardsSection" hidden>
+  <div class="wrap">
+    <div class="press-head reveal" style="margin-bottom:32px;"><span class="square"></span> 03 / AWARDS</div>
+    <div class="awards-grid" id="awardsGrid"></div>
+  </div>
+</section>
+
+<section class="credits wrap" id="creditsSection" hidden>
+  <div class="reveal"><h3 id="creditsH3">Credits</h3></div>
+  <div class="credits-list reveal" id="creditsList"></div>
+</section>
+
+<section class="download" id="downloadSection">
+  <div class="wrap">
+    <h3 class="reveal" id="downloadTitle">Play it.</h3>
+    <div class="store-row reveal" id="storeRow"></div>
+  </div>
+</section>
+
+<section class="next-game" id="nextSection" hidden>
+  <div class="wrap">
+    <p class="next-eyebrow reveal">→ Next game</p>
+    <a href="#" class="next-link reveal" data-cursor-label="VIEW" id="nextLink">
+      <span class="next-name" id="nextName"></span><span class="next-arrow">↗</span>
+    </a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-bottom">
+      <span id="footerCopy"></span>
+      <span id="footerClock">— —:— —</span>
+      <span id="footerTagline"></span>
+    </div>
+  </div>
+</footer>
+
+<script src="content.js"></script>
+<script>
+(function(){
+  var C = window.SITE_CONTENT || {};
+  var games = C.games || [];
+
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function escAttr(s){ return esc(s).replace(/"/g,'&quot;'); }
+  window.phFail = function(img){
+    var d = document.createElement('div'); d.className = 'ph';
+    var s = document.createElement('span'); s.textContent = img.getAttribute('data-label') || '';
+    d.appendChild(s); if (img.parentNode) img.parentNode.replaceChild(d, img);
+  };
+  function media(src, label){
+    if (src) return '<img class="media" src="' + escAttr(src) + '" alt="' + escAttr(label) + '" data-label="' + escAttr(label) + '" onerror="phFail(this)">';
+    return '<div class="ph"><span>' + esc(label || '') + '</span></div>';
+  }
+  function titleHTML(name, italicWord){
+    name = String(name == null ? '' : name);
+    if (!italicWord) return esc(name);
+    return name.split(/(\s+)/).map(function(p){ return p.trim() === String(italicWord).trim() ? '<em>' + esc(p) + '</em>' : esc(p); }).join('');
+  }
+  var STORE_ICONS = {
+    'steam': '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.9.5.9 5.1.1 11l6.4 2.6c.5-.4 1.2-.6 1.9-.6h.2l2.8-4.1v-.1c0-2.4 2-4.4 4.4-4.4 2.5 0 4.5 2 4.5 4.5s-2 4.5-4.5 4.5h-.1L11.7 16v.1c0 1.9-1.5 3.4-3.4 3.4-1.6 0-3-1.2-3.3-2.7l-4.5-1.9C1.9 19.7 6.5 23.5 12 23.5c6.4 0 11.5-5.1 11.5-11.5S18.4.5 12 .5z"/></svg>',
+    'google-play': '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.6 1.7c-.4.3-.6.8-.6 1.4v17.8c0 .6.2 1.1.6 1.4l9.6-9.7L3.6 1.7zm10.7 10.6 2.7 2.7-12 6.8 9.3-9.5zm5.3-3-3.4 1.9 3.4 3.4c.7-.4 1.1-1 1.1-1.7s-.4-1.3-1.1-1.6zm-5.3 2 2.7-2.7L4.6 1.7l9.7 9.6z"/></svg>',
+    'app-store': '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.365 1.43c0 1.14-.467 2.22-1.222 3.01-.81.85-2.14 1.51-3.24 1.42-.13-1.09.42-2.25 1.16-3.02.82-.86 2.24-1.49 3.3-1.41zM20.5 17.2c-.6 1.38-.89 1.99-1.66 3.21-1.08 1.7-2.6 3.82-4.49 3.83-1.68.02-2.11-1.09-4.39-1.08-2.28.01-2.76 1.1-4.44 1.09-1.89-.02-3.33-1.93-4.41-3.63C-1.1 17.7-1.46 11.95 1.2 8.9c.93-1.09 2.41-1.78 3.81-1.78 1.43 0 2.33.98 3.51.98 1.15 0 1.85-.98 3.51-.98 1.25 0 2.57.68 3.51 1.86-3.08 1.69-2.58 6.09.96 7.22z"/></svg>'
+  };
+  function storeIcon(k){ return STORE_ICONS[k] || STORE_ICONS['steam']; }
+  function show(id){ var e = document.getElementById(id); if (e) e.hidden = false; }
+
+  // Find the requested game.
+  var slug = (new URLSearchParams(location.search)).get('game');
+  var idx = games.findIndex(function(g){ return g.slug === slug; });
+  if (idx < 0) idx = 0;
+  var g = games[idx];
+
+  if (C.studioName) document.getElementById('brandName').innerHTML = esc(C.studioName).replace(/ /g, '&nbsp;');
+
+  if (!g){
+    document.getElementById('heroTitle').textContent = 'Game not found';
+    document.getElementById('crumbName').textContent = '—';
+    document.getElementById('downloadSection').hidden = true;
+    document.getElementById('footerCopy').textContent = (C.contactSection && C.contactSection.copyright) || '';
+    return;
+  }
+
+  document.documentElement.style.setProperty('--game-1', g.accent1 || '#a4ecd0');
+  document.documentElement.style.setProperty('--game-2', g.accent2 || '#4ad6c0');
+  document.title = (g.name || 'Game') + ' — ' + (C.studioName || 'Bugai Games');
+
+  // status pill
+  var available = g.status !== 'coming-soon';
+  document.getElementById('statusText').textContent = available ? 'Available' : 'In development';
+
+  // hero
+  var total = games.length;
+  document.getElementById('crumbNum').textContent = String(total - idx).padStart(2, '0');
+  document.getElementById('crumbName').textContent = g.name || '';
+  document.getElementById('heroTitle').innerHTML = titleHTML(g.name, g.italicWord);
+  if (g.tagline){ var tl = document.getElementById('heroTagline'); tl.textContent = g.tagline; tl.hidden = false; }
+
+  // meta strip — only the fields you filled in
+  var m = g.meta || {};
+  var metaItems = [ ['Released', m.released], ['Platforms', m.platforms], ['Players', m.players], ['Avg. session', m.session] ]
+    .filter(function(x){ return x[1]; });
+  if (metaItems.length){
+    document.getElementById('metaStrip').innerHTML = metaItems.map(function(x){
+      return '<div class="meta-item"><h5>' + esc(x[0]) + '</h5><p>' + esc(x[1]) + '</p></div>';
+    }).join('');
+    show('metaStrip');
+  }
+
+  // hero art
+  document.getElementById('heroArt').innerHTML = g.keyArt
+    ? media(g.keyArt, g.name)
+    : '<span class="hero-art-label">' + esc((g.name || '').toLowerCase()) + '</span>';
+
+  // about
+  var about = (g.about || []).filter(function(p){ return p && p.trim(); });
+  if (about.length){
+    document.getElementById('aboutH2').innerHTML = 'What is ' + titleHTML(g.name, g.italicWord) + '?';
+    var html = about.map(function(p){ return '<p>' + esc(p) + '</p>'; }).join('');
+    if (g.pullQuote){
+      var parts = about.map(function(p){ return '<p>' + esc(p) + '</p>'; });
+      var q = '<blockquote class="pull-quote">' + esc(g.pullQuote) + '</blockquote>';
+      if (parts.length >= 2){ parts.splice(parts.length - 1, 0, q); html = parts.join(''); }
+      else { html = parts.join('') + q; }
+    }
+    document.getElementById('aboutBody').innerHTML = html;
+    show('aboutSection');
+  }
+
+  // screenshots
+  var shots = (g.screenshots || []).filter(function(s){ return s && (s.img || s.label); });
+  if (shots.length){
+    document.getElementById('shotsCount').textContent = shots.length + ' screenshot' + (shots.length > 1 ? 's' : '');
+    document.getElementById('shotsGrid').innerHTML = shots.map(function(s){
+      return '<div class="shot">' + media(s.img, s.label || '') + (s.label ? '<span class="shot-label">' + esc(s.label) + '</span>' : '') + '</div>';
+    }).join('');
+    show('shotsSection');
+  }
+
+  // press
+  var press = (g.press || []).filter(function(p){ return p && p.quote; });
+  if (press.length){
+    document.getElementById('pressGrid').innerHTML = press.map(function(p){
+      var src = p.source ? '<p class="quote-source"><strong>' + esc(p.source) + '</strong>' + (p.note ? ' · ' + esc(p.note) : '') + '</p>' : '';
+      return '<div class="reveal"><p class="quote">' + esc(p.quote) + '</p>' + src + '</div>';
+    }).join('');
+    show('pressSection');
+  }
+
+  // awards
+  var awards = (g.awards || []).filter(function(a){ return a && a.name; });
+  if (awards.length){
+    document.getElementById('awardsGrid').innerHTML = awards.map(function(a){
+      return '<div class="award reveal"><div class="award-year">' + esc(a.year || '') + '</div><div class="award-name">' + esc(a.name) + '</div><div class="award-from">' + esc(a.from || '') + '</div></div>';
+    }).join('');
+    show('awardsSection');
+  }
+
+  // credits
+  var credits = (g.credits || []).filter(function(c){ return c && c.name; });
+  if (credits.length){
+    document.getElementById('creditsH3').innerHTML = 'Made by <em>' + esc(C.studioName || 'us') + '</em>.';
+    document.getElementById('creditsList').innerHTML = credits.map(function(c){
+      return '<div class="credit-row"><span class="credit-role">' + esc(c.role || '') + '</span><span class="credit-name">' + esc(c.name) + '</span></div>';
+    }).join('');
+    show('creditsSection');
+  }
+
+  // download / coming soon
+  var st = g.store || {};
+  if (available && st.name){
+    document.getElementById('downloadTitle').innerHTML = 'Get it. <em>Have fun.</em>';
+    var url = st.url || '#';
+    document.getElementById('storeRow').innerHTML =
+      '<a href="' + escAttr(url) + '"' + (/^https?:/.test(url) ? ' target="_blank" rel="noopener"' : '') + ' class="store-btn" data-cursor-label="OPEN"><span class="icn">' + storeIcon(st.icon) + '</span> ' + esc(st.name) + '</a>';
+  } else {
+    document.getElementById('downloadTitle').innerHTML = '<em>In development.</em>';
+    document.getElementById('storeRow').innerHTML = '<span class="coming-note">Coming soon — say hi to follow along</span>';
+  }
+
+  // next game (wraps around)
+  if (total > 1){
+    var ni = (idx + 1) % total;
+    var ng = games[ni];
+    document.getElementById('nextLink').href = 'game.html?game=' + encodeURIComponent(ng.slug || '');
+    document.getElementById('nextName').innerHTML = titleHTML(ng.name, ng.italicWord);
+    show('nextSection');
+  }
+
+  // footer
+  var cs = C.contactSection || {};
+  document.getElementById('footerCopy').textContent = cs.copyright || '';
+  document.getElementById('footerTagline').textContent = cs.tagline || '';
+
+  /* ---- behaviors ---- */
+  (function(){
+    var cur = document.getElementById('cursor'), lbl = document.getElementById('cursorLabel');
+    var blobs = document.querySelectorAll('.blob'), depths = [0.45, -0.65, 0.55, -0.35];
+    var mx = innerWidth/2, my = innerHeight/2, cx = mx, cy = my, nx = 0, ny = 0, lnx = 0, lny = 0, scrollY = 0, lScrollY = 0;
+    addEventListener('mousemove', function(e){ mx = e.clientX; my = e.clientY; nx = (mx/innerWidth-0.5)*2; ny = (my/innerHeight-0.5)*2; });
+    addEventListener('scroll', function(){ scrollY = window.scrollY; }, { passive: true });
+    (function tick(){
+      cx += (mx-cx)*0.22; cy += (my-cy)*0.22;
+      cur.style.transform = 'translate(' + cx + 'px,' + cy + 'px) translate(-50%, -50%)';
+      lnx += (nx-lnx)*0.11; lny += (ny-lny)*0.11; lScrollY += (scrollY-lScrollY)*0.08;
+      var t = performance.now();
+      blobs.forEach(function(b, i){
+        var d = depths[i] || 0.3, phase = i*1.7;
+        var ax = Math.sin(t*(0.00018+i*0.00006)+phase)*(220+i*30);
+        var ay = Math.cos(t*(0.00027+i*0.00005)+phase*0.7)*(180+i*25);
+        b.style.transform = 'translate3d(' + (ax+lnx*700*d) + 'px,' + (ay+lny*560*d+lScrollY*0.25*(i%2===0?1:-1)) + 'px,0)';
+      });
+      requestAnimationFrame(tick);
+    })();
+    document.querySelectorAll('[data-cursor-label]').forEach(function(el){
+      el.addEventListener('mouseenter', function(){ cur.classList.add('expanded'); lbl.textContent = el.dataset.cursorLabel; });
+      el.addEventListener('mouseleave', function(){ cur.classList.remove('expanded'); lbl.textContent = ''; });
+    });
+  })();
+
+  (function(){
+    var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if (e.isIntersecting) e.target.classList.add('in'); }); }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+  })();
+
+  (function(){
+    var tz = C.timezoneLabel || '';
+    function pad(n){ return n < 10 ? '0' + n : '' + n; }
+    function tick(){ var d = new Date(); document.getElementById('footerClock').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + (tz ? ' ' + tz : ''); }
+    tick(); setInterval(tick, 1000);
+  })();
+
+})();
+</script>
+
+</body>
+</html>
